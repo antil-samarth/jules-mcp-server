@@ -123,7 +123,7 @@ describe("auth middleware", () => {
       const res = await handler(req);
 
       expect(res.status).toBe(401);
-      expect(res.headers.get("WWW-Authenticate")).toBe('Bearer realm="jules-mcp"');
+      expect(res.headers.get("WWW-Authenticate")).toContain("resource_metadata=");
       const data = await res.json();
       expect(data).toEqual({ error: "unauthorized" });
       expect(inner).not.toHaveBeenCalled();
@@ -141,11 +141,11 @@ describe("auth middleware", () => {
       const res = await handler(req);
 
       expect(res.status).toBe(401);
-      expect(res.headers.get("WWW-Authenticate")).toBe('Bearer realm="jules-mcp"');
+      expect(res.headers.get("WWW-Authenticate")).toContain("resource_metadata=");
       expect(inner).not.toHaveBeenCalled();
     });
 
-    it("invokes inner handler when token is valid", async () => {
+    it("invokes inner handler when static token is valid", async () => {
       process.env.MCP_AUTH_TOKEN = VALID_TOKEN;
       const inner = vi.fn(async () => new Response(JSON.stringify({ result: "success" }), { status: 200 }));
       const handler = withBearerAuth(inner);
@@ -158,6 +158,24 @@ describe("auth middleware", () => {
 
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ result: "success" });
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it("invokes inner handler when OAuth access token is valid", async () => {
+      const { createAccessToken } = await import("@/lib/oauth");
+      process.env.MCP_AUTH_TOKEN = VALID_TOKEN;
+      const oauthToken = createAccessToken({ clientId: "gemini" });
+      const inner = vi.fn(async () => new Response(JSON.stringify({ result: "oauth_success" }), { status: 200 }));
+      const handler = withBearerAuth(inner);
+
+      const req = new Request("http://localhost/api/mcp", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${oauthToken}` },
+      });
+      const res = await handler(req);
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ result: "oauth_success" });
       expect(inner).toHaveBeenCalledTimes(1);
     });
 

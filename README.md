@@ -125,7 +125,7 @@ curl -i -X POST http://localhost:3000/api/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Both return HTTP `401 Unauthorized` with `WWW-Authenticate: Bearer realm="jules-mcp"`.
+Both return HTTP `401 Unauthorized` with `WWW-Authenticate: Bearer resource_metadata="<BASE_URL>/.well-known/oauth-protected-resource"`.
 
 ### 2. List Available Tools (200 OK)
 
@@ -160,6 +160,18 @@ curl -s -X POST http://localhost:3000/api/mcp \
 ---
 
 ## Connecting Clients
+
+### Gemini Web App (gemini.google.com)
+
+Gemini's web app discovers authentication using standard **OAuth 2.1 / RFC 9728** metadata:
+
+1. When adding a server in Gemini, enter your server URL:
+   `https://<your-vercel-domain>.vercel.app/api/mcp`
+2. Provide your OAuth credentials:
+   - **Client ID**: Your `MCP_CLIENT_ID` (from environment variables)
+   - **Client Secret**: Your `MCP_CLIENT_SECRET` (from environment variables)
+3. Gemini discovers metadata at `/.well-known/oauth-protected-resource` and redirects to `/api/oauth/authorize`.
+4. Our lightweight OAuth server auto-approves the request, verifies PKCE (`S256`), and issues an OAuth access token through `/api/oauth/token`.
 
 ### Gemini CLI
 

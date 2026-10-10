@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { getBaseUrl, verifyAccessToken } from "@/lib/oauth";
 
 /**
  * Bearer-token authentication (and minimal CORS) middleware for Fetch-style route handlers.
@@ -110,7 +111,17 @@ export function withBearerAuth(handler: RouteHandler): (req: Request) => Promise
     const cors = corsHeadersFor(req);
 
     const expected = getConfiguredToken();
-    if (!expected) {
+    const hasStaticConfig = Boolean(process.env.MCP_AUTH_TOKEN?.trim());
+    const hasOAuthConfig = Boolean(process.env.MCP_CLIENT_SECRET?.trim() || process.env.MCP_CLIENT_ID?.trim());
+
+    if (hasStaticConfig && !expected) {
+      console.error(
+        `[auth] MCP_AUTH_TOKEN is shorter than ${MIN_TOKEN_LENGTH} characters; refusing all requests.`,
+      );
+      return jsonResponse(500, { error: "server_misconfigured" }, cors);
+    }
+
+    if (!expected && !hasOAuthConfig) {
       console.error(
         `[auth] MCP_AUTH_TOKEN is missing or shorter than ${MIN_TOKEN_LENGTH} characters; refusing all requests.`,
       );
@@ -118,9 +129,13 @@ export function withBearerAuth(handler: RouteHandler): (req: Request) => Promise
     }
 
     const provided = extractBearerToken(req);
-    if (provided === undefined || !safeEqual(provided, expected)) {
+    const validStatic = expected && provided ? safeEqual(provided, expected) : false;
+    const validOAuth = provided ? verifyAccessToken(provided) !== null : false;
+
+    if (!validStatic && !validOAuth) {
+      const baseUrl = getBaseUrl(req);
       return jsonResponse(401, { error: "unauthorized" }, {
-        "WWW-Authenticate": 'Bearer realm="jules-mcp"',
+        "WWW-Authenticate": `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"`,
         ...cors,
       });
     }
