@@ -1,0 +1,12 @@
+node_modules
+.next
+.vercel
+out
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets
+.env
+.env.*
+!.env.example
