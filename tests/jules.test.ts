@@ -7,6 +7,7 @@ import {
   normalizeSessionId,
   normalizeSourceName,
   listSources,
+  listSessions,
   createSession,
   getSession,
   listActivities,
@@ -86,6 +87,50 @@ describe("jules client", () => {
       expect(url.toString()).toBe(`${JULES_BASE_URL}/sources?pageSize=10&pageToken=token1`);
       expect((init.headers as Record<string, string>)["x-goog-api-key"]).toBe(FAKE_KEY);
       expect(result).toEqual({ sources: [{ name: "sources/github/foo/bar" }] });
+    });
+
+    it("listSessions sends x-goog-api-key header and query params", async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            sessions: [{ name: "sessions/s1", id: "s1", title: "Test session" }],
+            nextPageToken: "next-token-123",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
+      global.fetch = mockFetch;
+
+      const result = await listSessions({ pageSize: 25, pageToken: "token-abc" });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [url, init] = mockFetch.mock.calls[0] as [URL, RequestInit];
+      expect(url.toString()).toBe(`${JULES_BASE_URL}/sessions?pageSize=25&pageToken=token-abc`);
+      expect((init.headers as Record<string, string>)["x-goog-api-key"]).toBe(FAKE_KEY);
+      expect(result).toEqual({
+        sessions: [{ name: "sessions/s1", id: "s1", title: "Test session" }],
+        nextPageToken: "next-token-123",
+      });
+    });
+
+    it("listSessions works without parameters", async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ sessions: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      global.fetch = mockFetch;
+
+      const result = await listSessions();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [url] = mockFetch.mock.calls[0] as [URL, RequestInit];
+      expect(url.toString()).toBe(`${JULES_BASE_URL}/sessions`);
+      expect(result).toEqual({ sessions: [] });
     });
 
     it("createSession formats body with sourceContext and githubRepoContext", async () => {

@@ -100,6 +100,11 @@ export interface JulesSession {
   outputs?: SessionOutput[];
 }
 
+export interface ListSessionsResponse {
+  sessions?: JulesSession[];
+  nextPageToken?: string;
+}
+
 export interface JulesActivity {
   name: string;
   id?: string;
@@ -255,6 +260,18 @@ export interface ListSourcesParams {
 /** `GET /sources` */
 export function listSources(params: ListSourcesParams = {}): Promise<ListSourcesResponse> {
   return julesFetch<ListSourcesResponse>("sources", {
+    query: { pageSize: params.pageSize, pageToken: params.pageToken },
+  });
+}
+
+export interface ListSessionsParams {
+  pageSize?: number;
+  pageToken?: string | undefined;
+}
+
+/** `GET /sessions` */
+export function listSessions(params: ListSessionsParams = {}): Promise<ListSessionsResponse> {
+  return julesFetch<ListSessionsResponse>("sessions", {
     query: { pageSize: params.pageSize, pageToken: params.pageToken },
   });
 }

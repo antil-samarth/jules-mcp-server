@@ -50,6 +50,7 @@ Designed for zero-maintenance deployment on **Vercel Hobby** (free tier) and con
 | Tool | Description | Inputs |
 |---|---|---|
 | `jules_list_sources` | List connected GitHub repositories. Use the returned `name` (e.g. `sources/github/owner/repo`) as `source` in session creation. | `pageSize` (1–100, default: 30), `pageToken` (optional) |
+| `jules_list_sessions` | List past and active Jules coding sessions. | `pageSize` (1–100, default: 30), `pageToken` (optional) |
 | `jules_create_session` | Start a Jules coding session on a connected repository. Supports automated PR creation and plan approval requirements. | `prompt` (required), `source` (`owner/repo` or `sources/github/owner/repo`), `branch` (default: "main"), `title` (optional), `automationMode` (`AUTO_CREATE_PR` or `AUTOMATION_MODE_UNSPECIFIED`), `requirePlanApproval` (boolean) |
 | `jules_get_session` | Fetch session state, progress, and pull request output URL once completed. | `sessionId` (`123456` or `sessions/123456`) |
 | `jules_list_activities` | Retrieve chronological session activities (plans, updates, messages, PR events). | `sessionId`, `pageSize`, `pageToken` |

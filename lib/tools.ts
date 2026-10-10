@@ -8,6 +8,7 @@ import {
   JulesConfigError,
   JulesValidationError,
   listActivities,
+  listSessions,
   listSources,
   sendMessage,
 } from "@/lib/jules";
@@ -67,6 +68,19 @@ export function registerJulesTools(server: McpServer): void {
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     ({ pageSize, pageToken }) => run(() => listSources({ pageSize, pageToken })),
+  );
+
+  server.registerTool(
+    "jules_list_sessions",
+    {
+      title: "List Jules Sessions",
+      description:
+        "List past and active Jules sessions. Use the returned session `name` or `id` with " +
+        "`jules_get_session` or `jules_list_activities`.",
+      inputSchema: z.object({ pageSize: pageSizeSchema, pageToken: pageTokenSchema }),
+      annotations: { readOnlyHint: true, openWorldHint: true },
+    },
+    ({ pageSize, pageToken }) => run(() => listSessions({ pageSize, pageToken })),
   );
 
   server.registerTool(

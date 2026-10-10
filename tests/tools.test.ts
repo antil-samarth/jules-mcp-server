@@ -12,6 +12,7 @@ describe("registerJulesTools", () => {
     expect(Object.keys(registered)).toEqual(
       expect.arrayContaining([
         "jules_list_sources",
+        "jules_list_sessions",
         "jules_create_session",
         "jules_get_session",
         "jules_list_activities",
@@ -42,6 +43,32 @@ describe("registerJulesTools", () => {
     expect(result.isError).toBeUndefined();
     expect(JSON.parse(result.content[0]!.text)).toEqual({
       sources: [{ name: "sources/github/octocat/hello-world" }],
+    });
+  });
+
+  it("handles successful jules_list_sessions execution formatting JSON output", async () => {
+    const server = new McpServer({ name: "test-server", version: "1.0.0" });
+    registerJulesTools(server);
+
+    const registered = (server as unknown as {
+      _registeredTools: Record<string, { handler: (args: unknown) => Promise<unknown> }>;
+    })._registeredTools;
+
+    const listSessionsSpy = vi.spyOn(jules, "listSessions").mockResolvedValue({
+      sessions: [{ name: "sessions/123", id: "123", title: "Refactor auth" }],
+      nextPageToken: "next-page-456",
+    });
+
+    const result = (await registered.jules_list_sessions!.handler({ pageSize: 15, pageToken: "prev-token" })) as {
+      content: { type: string; text: string }[];
+      isError?: boolean;
+    };
+
+    expect(listSessionsSpy).toHaveBeenCalledWith({ pageSize: 15, pageToken: "prev-token" });
+    expect(result.isError).toBeUndefined();
+    expect(JSON.parse(result.content[0]!.text)).toEqual({
+      sessions: [{ name: "sessions/123", id: "123", title: "Refactor auth" }],
+      nextPageToken: "next-page-456",
     });
   });
 
