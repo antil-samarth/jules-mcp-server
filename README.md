@@ -1,4 +1,5 @@
 # Jules MCP Bridge
+[![M8ven Score](https://m8ven.ai/badge/mcp/antil-samarth-jules-mcp-server-7gr67h?v=b621327c006e4290d8d700b4728d038b)](https://m8ven.ai/mcp/antil-samarth-jules-mcp-server-7gr67h?s=readme)
 
 A stateless, authenticated [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server built on **Next.js (App Router)** that exposes the **Google Jules REST API** (`https://jules.googleapis.com/v1alpha`) as MCP tools.
 
@@ -222,4 +223,6 @@ npm run build
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+
 
