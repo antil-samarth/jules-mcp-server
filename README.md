@@ -1,4 +1,5 @@
 # Jules MCP Bridge
+[![M8ven Score](https://m8ven.ai/badge/mcp/antil-samarth-jules-mcp-server-7gr67h?v=b621327c006e4290d8d700b4728d038b)](https://m8ven.ai/mcp/antil-samarth-jules-mcp-server-7gr67h?s=readme)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fantil-samarth%2Fjules-mcp-server&env=JULES_API_KEY,MCP_AUTH_TOKEN,MCP_CLIENT_ID,MCP_CLIENT_SECRET)
 
@@ -230,4 +231,6 @@ npm run build
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+
 
