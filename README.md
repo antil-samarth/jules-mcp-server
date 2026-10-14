@@ -107,28 +107,7 @@ The MCP endpoint is accessible at `http://localhost:3000/api/mcp`.
 
 ## Testing with curl
 
-### 1. Test Authentication Enforcement (Should Return 401)
-
-Without token:
-```bash
-curl -i -X POST http://localhost:3000/api/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
-
-With incorrect token:
-```bash
-curl -i -X POST http://localhost:3000/api/mcp \
-  -H "Authorization: Bearer wrong-token" \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
-
-Both return HTTP `401 Unauthorized` with `WWW-Authenticate: Bearer resource_metadata="<BASE_URL>/.well-known/oauth-protected-resource"`.
-
-### 2. List Available Tools (200 OK)
+### 1. List Available Tools (200 OK)
 
 ```bash
 curl -s -X POST http://localhost:3000/api/mcp \
@@ -138,7 +117,7 @@ curl -s -X POST http://localhost:3000/api/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-### 3. Call a Tool (e.g. `jules_list_sources`)
+### 2. Call a Tool (e.g. `jules_list_sources`)
 
 ```bash
 curl -s -X POST http://localhost:3000/api/mcp \
@@ -237,3 +216,10 @@ npm test
 # Build Next.js production bundle
 npm run build
 ```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+

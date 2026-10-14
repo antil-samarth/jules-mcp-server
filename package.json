@@ -1,6 +1,7 @@
 {
   "name": "jules-mcp-server",
   "version": "1.0.0",
+  "license": "MIT",
   "private": true,
   "description": "Authenticated MCP bridge between LLM clients and the Google Jules REST API, built for Next.js on Vercel.",
   "engines": {
