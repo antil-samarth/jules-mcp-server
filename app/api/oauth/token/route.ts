@@ -2,6 +2,7 @@ import { safeEqual } from "@/lib/auth";
 import {
   createAccessToken,
   createRefreshToken,
+  MIN_SECRET_LENGTH,
   verifyAuthCode,
   verifyPkce,
   verifyRefreshToken,
@@ -34,6 +35,13 @@ function jsonError(
 }
 
 export async function POST(req: Request) {
+  const expectedClientId = process.env.MCP_CLIENT_ID?.trim();
+  const expectedClientSecret = process.env.MCP_CLIENT_SECRET?.trim();
+
+  if (!expectedClientId || !expectedClientSecret || expectedClientSecret.length < MIN_SECRET_LENGTH) {
+    return jsonError(500, "server_misconfigured", "OAuth credentials are not properly configured on the server");
+  }
+
   let clientId: string | undefined;
   let clientSecret: string | undefined;
 
@@ -85,23 +93,16 @@ export async function POST(req: Request) {
   }
 
   // 4. Validate client credentials
-  const expectedClientId = process.env.MCP_CLIENT_ID?.trim();
-  const expectedClientSecret = process.env.MCP_CLIENT_SECRET?.trim();
-
-  if (expectedClientId) {
-    if (!clientId || clientId !== expectedClientId) {
-      return jsonError(401, "invalid_client", "Client ID does not match", {
-        "WWW-Authenticate": 'Basic realm="oauth"',
-      });
-    }
+  if (!clientId || clientId !== expectedClientId) {
+    return jsonError(401, "invalid_client", "Client ID does not match", {
+      "WWW-Authenticate": 'Basic realm="oauth"',
+    });
   }
 
-  if (expectedClientSecret) {
-    if (!clientSecret || !safeEqual(clientSecret, expectedClientSecret)) {
-      return jsonError(401, "invalid_client", "Invalid client secret", {
-        "WWW-Authenticate": 'Basic realm="oauth"',
-      });
-    }
+  if (!clientSecret || !safeEqual(clientSecret, expectedClientSecret)) {
+    return jsonError(401, "invalid_client", "Invalid client secret", {
+      "WWW-Authenticate": 'Basic realm="oauth"',
+    });
   }
 
   const grantType = bodyParams.grant_type;

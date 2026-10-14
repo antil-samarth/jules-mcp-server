@@ -65,7 +65,7 @@ export function registerJulesTools(server: McpServer): void {
         "List the GitHub repositories connected to Jules. Use the returned `name` " +
         "(e.g. `sources/github/owner/repo`) as the `source` when creating a session.",
       inputSchema: z.object({ pageSize: pageSizeSchema, pageToken: pageTokenSchema }),
-      annotations: { readOnlyHint: true, openWorldHint: true },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     ({ pageSize, pageToken }) => run(() => listSources({ pageSize, pageToken })),
   );
@@ -78,7 +78,7 @@ export function registerJulesTools(server: McpServer): void {
         "List past and active Jules sessions. Use the returned session `name` or `id` with " +
         "`jules_get_session` or `jules_list_activities`.",
       inputSchema: z.object({ pageSize: pageSizeSchema, pageToken: pageTokenSchema }),
-      annotations: { readOnlyHint: true, openWorldHint: true },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     ({ pageSize, pageToken }) => run(() => listSessions({ pageSize, pageToken })),
   );
@@ -109,7 +109,7 @@ export function registerJulesTools(server: McpServer): void {
           .optional()
           .describe("If true, Jules waits for `jules_approve_plan` before executing its plan."),
       }),
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     },
     (args) => run(() => createSession(args)),
   );
@@ -122,7 +122,7 @@ export function registerJulesTools(server: McpServer): void {
         "Fetch a session's current state and outputs. When Jules has finished and opened a pull request, " +
         "`outputs[].pullRequest.url` contains its URL.",
       inputSchema: z.object({ sessionId: sessionIdSchema }),
-      annotations: { readOnlyHint: true, openWorldHint: true },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     ({ sessionId }) => run(() => getSession(sessionId)),
   );
@@ -135,7 +135,7 @@ export function registerJulesTools(server: McpServer): void {
         "Retrieve the activity log of a session: generated plans, progress updates, messages, and " +
         "completion/failure events. Use it to monitor what Jules is doing.",
       inputSchema: z.object({ sessionId: sessionIdSchema, pageSize: pageSizeSchema, pageToken: pageTokenSchema }),
-      annotations: { readOnlyHint: true, openWorldHint: true },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     ({ sessionId, pageSize, pageToken }) => run(() => listActivities({ sessionId, pageSize, pageToken })),
   );
@@ -149,7 +149,7 @@ export function registerJulesTools(server: McpServer): void {
         sessionId: sessionIdSchema,
         message: z.string().min(1).max(10_000).describe("The message to send to Jules."),
       }),
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     },
     ({ sessionId, message }) => run(() => sendMessage({ sessionId, prompt: message })),
   );

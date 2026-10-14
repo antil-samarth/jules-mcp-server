@@ -1,9 +1,19 @@
-import { createAuthCode } from "@/lib/oauth";
+import { createAuthCode, MIN_SECRET_LENGTH } from "@/lib/oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export function GET(req: Request) {
+  const expectedClientId = process.env.MCP_CLIENT_ID?.trim();
+  const expectedClientSecret = process.env.MCP_CLIENT_SECRET?.trim();
+
+  if (!expectedClientId || !expectedClientSecret || expectedClientSecret.length < MIN_SECRET_LENGTH) {
+    return Response.json(
+      { error: "server_misconfigured", error_description: "OAuth server is not configured properly" },
+      { status: 500 },
+    );
+  }
+
   const url = new URL(req.url);
   const clientId = url.searchParams.get("client_id");
   const redirectUri = url.searchParams.get("redirect_uri");
@@ -19,8 +29,7 @@ export function GET(req: Request) {
     );
   }
 
-  const expectedClientId = process.env.MCP_CLIENT_ID?.trim();
-  if (expectedClientId && clientId !== expectedClientId) {
+  if (clientId !== expectedClientId) {
     return Response.json(
       { error: "unauthorized_client", error_description: "Invalid client_id" },
       { status: 400 },

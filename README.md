@@ -1,5 +1,7 @@
 # Jules MCP Bridge
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fantil-samarth%2Fjules-mcp-server&env=JULES_API_KEY,MCP_AUTH_TOKEN,MCP_CLIENT_ID,MCP_CLIENT_SECRET)
+
 A stateless, authenticated [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server built on **Next.js (App Router)** that exposes the **Google Jules REST API** (`https://jules.googleapis.com/v1alpha`) as MCP tools.
 
 Designed for zero-maintenance deployment on **Vercel Hobby** (free tier) and consumption by **Gemini CLI** and other MCP clients over Streamable HTTP at `/api/mcp`.
@@ -50,7 +52,7 @@ Designed for zero-maintenance deployment on **Vercel Hobby** (free tier) and con
 | Tool | Description | Inputs |
 |---|---|---|
 | `jules_list_sources` | List connected GitHub repositories. Use the returned `name` (e.g. `sources/github/owner/repo`) as `source` in session creation. | `pageSize` (1–100, default: 30), `pageToken` (optional) |
-| `jules_list_sessions` | List past and active Jules coding sessions. | `pageSize` (1–100, default: 30), `pageToken` (optional) |
+| `jules_list_sessions` | List past and active Jules coding sessions. Use returned session IDs with `jules_get_session` or `jules_list_activities`. | `pageSize` (1–100, default: 30), `pageToken` (optional) |
 | `jules_create_session` | Start a Jules coding session on a connected repository. Supports automated PR creation and plan approval requirements. | `prompt` (required), `source` (`owner/repo` or `sources/github/owner/repo`), `branch` (default: "main"), `title` (optional), `automationMode` (`AUTO_CREATE_PR` or `AUTOMATION_MODE_UNSPECIFIED`), `requirePlanApproval` (boolean) |
 | `jules_get_session` | Fetch session state, progress, and pull request output URL once completed. | `sessionId` (`123456` or `sessions/123456`) |
 | `jules_list_activities` | Retrieve chronological session activities (plans, updates, messages, PR events). | `sessionId`, `pageSize`, `pageToken` |
@@ -93,6 +95,8 @@ Fill in `.env.local`:
 ```dotenv
 JULES_API_KEY=your_google_jules_api_key_here
 MCP_AUTH_TOKEN=your_generated_32_byte_hex_token_here
+MCP_CLIENT_ID=your_oauth_client_id_here
+MCP_CLIENT_SECRET=your_oauth_client_secret_at_least_16_chars
 ```
 
 Start the local development server:
@@ -191,11 +195,15 @@ Set to `*` to allow any origin. If unset, CORS headers are omitted for security.
 
 ## Deployment to Vercel
 
-1. Push your repository to GitHub / GitLab.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fantil-samarth%2Fjules-mcp-server&env=JULES_API_KEY,MCP_AUTH_TOKEN,MCP_CLIENT_ID,MCP_CLIENT_SECRET)
+
+1. Push your repository to GitHub / GitLab (or click the button above).
 2. Import the project into [Vercel](https://vercel.com).
 3. In **Project Settings** > **Environment Variables**, add:
    - `JULES_API_KEY`: Your secret Google Jules API key.
    - `MCP_AUTH_TOKEN`: Your random secret token (32+ chars).
+   - `MCP_CLIENT_ID`: OAuth client ID for Gemini web app.
+   - `MCP_CLIENT_SECRET`: OAuth client secret for Gemini web app (16+ chars).
    - *(Optional)* `MCP_CORS_ORIGINS`: If web apps will connect.
 4. Deploy with `vercel --prod` or git push.
 

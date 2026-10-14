@@ -26,12 +26,20 @@ export interface RefreshTokenPayload {
   exp: number; // Unix timestamp in seconds
 }
 
-function getOAuthSigningSecret(): string {
-  const secret = process.env.MCP_CLIENT_SECRET || process.env.MCP_AUTH_TOKEN;
-  if (!secret || secret.trim().length === 0) {
-    return "jules-mcp-internal-oauth-fallback-signing-secret-32b";
+export const MIN_SECRET_LENGTH = 16;
+
+export function getOAuthSigningSecret(): string {
+  const clientSecret = process.env.MCP_CLIENT_SECRET?.trim();
+  if (clientSecret && clientSecret.length >= MIN_SECRET_LENGTH) {
+    return clientSecret;
   }
-  return secret.trim();
+  const authToken = process.env.MCP_AUTH_TOKEN?.trim();
+  if (authToken && authToken.length >= MIN_SECRET_LENGTH) {
+    return authToken;
+  }
+  throw new Error(
+    "OAuth signing secret is not configured. Either MCP_CLIENT_SECRET or MCP_AUTH_TOKEN must be set to at least 16 characters.",
+  );
 }
 
 function hmacSha256(data: string, secret: string): string {
@@ -110,14 +118,14 @@ export function createAuthCode(params: {
  * Verifies the signature and expiration of an authorization code.
  */
 export function verifyAuthCode(code: string): AuthCodePayload | null {
-  const parts = code.split(".");
-  if (parts.length !== 2) return null;
-  const [payloadB64, sig] = parts as [string, string];
-  const expectedSig = hmacSha256(payloadB64, getOAuthSigningSecret());
-  if (Buffer.from(sig).length !== Buffer.from(expectedSig).length) return null;
-  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
-
   try {
+    const parts = code.split(".");
+    if (parts.length !== 2) return null;
+    const [payloadB64, sig] = parts as [string, string];
+    const expectedSig = hmacSha256(payloadB64, getOAuthSigningSecret());
+    if (Buffer.from(sig).length !== Buffer.from(expectedSig).length) return null;
+    if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
+
     const payload = JSON.parse(base64UrlDecode(payloadB64)) as AuthCodePayload;
     if (typeof payload.exp !== "number" || payload.exp < Date.now()) {
       return null;
@@ -168,14 +176,14 @@ export function createAccessToken(params: {
  * Verifies an OAuth access token, returning the payload if valid and unexpired.
  */
 export function verifyAccessToken(token: string): AccessTokenPayload | null {
-  const parts = token.split(".");
-  if (parts.length !== 2) return null;
-  const [payloadB64, sig] = parts as [string, string];
-  const expectedSig = hmacSha256(payloadB64, getOAuthSigningSecret());
-  if (Buffer.from(sig).length !== Buffer.from(expectedSig).length) return null;
-  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
-
   try {
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+    const [payloadB64, sig] = parts as [string, string];
+    const expectedSig = hmacSha256(payloadB64, getOAuthSigningSecret());
+    if (Buffer.from(sig).length !== Buffer.from(expectedSig).length) return null;
+    if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
+
     const payload = JSON.parse(base64UrlDecode(payloadB64)) as AccessTokenPayload;
     if (payload.type !== "access_token") return null;
     const now = Math.floor(Date.now() / 1000);
@@ -214,14 +222,14 @@ export function createRefreshToken(params: {
  * Verifies an OAuth refresh token.
  */
 export function verifyRefreshToken(token: string): RefreshTokenPayload | null {
-  const parts = token.split(".");
-  if (parts.length !== 2) return null;
-  const [payloadB64, sig] = parts as [string, string];
-  const expectedSig = hmacSha256(payloadB64, getOAuthSigningSecret());
-  if (Buffer.from(sig).length !== Buffer.from(expectedSig).length) return null;
-  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
-
   try {
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+    const [payloadB64, sig] = parts as [string, string];
+    const expectedSig = hmacSha256(payloadB64, getOAuthSigningSecret());
+    if (Buffer.from(sig).length !== Buffer.from(expectedSig).length) return null;
+    if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
+
     const payload = JSON.parse(base64UrlDecode(payloadB64)) as RefreshTokenPayload;
     if (payload.type !== "refresh_token") return null;
     const now = Math.floor(Date.now() / 1000);

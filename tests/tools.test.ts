@@ -22,6 +22,35 @@ describe("registerJulesTools", () => {
     );
   });
 
+  it("explicitly sets all four boolean annotations on every tool", () => {
+    const server = new McpServer({ name: "test-server", version: "1.0.0" });
+    registerJulesTools(server);
+
+    const registered = (server as unknown as {
+      _registeredTools: Record<string, { annotations?: Record<string, unknown> }>;
+    })._registeredTools;
+
+    const toolNames = [
+      "jules_list_sources",
+      "jules_list_sessions",
+      "jules_create_session",
+      "jules_get_session",
+      "jules_list_activities",
+      "jules_send_message",
+      "jules_approve_plan",
+    ];
+
+    for (const name of toolNames) {
+      const tool = registered[name];
+      expect(tool, `tool ${name} should be registered`).toBeDefined();
+      expect(tool?.annotations, `tool ${name} should have annotations`).toBeDefined();
+      expect(typeof tool?.annotations?.readOnlyHint, `tool ${name} readOnlyHint`).toBe("boolean");
+      expect(typeof tool?.annotations?.destructiveHint, `tool ${name} destructiveHint`).toBe("boolean");
+      expect(typeof tool?.annotations?.idempotentHint, `tool ${name} idempotentHint`).toBe("boolean");
+      expect(typeof tool?.annotations?.openWorldHint, `tool ${name} openWorldHint`).toBe("boolean");
+    }
+  });
+
   it("handles successful tool execution formatting JSON output", async () => {
     const server = new McpServer({ name: "test-server", version: "1.0.0" });
     registerJulesTools(server);

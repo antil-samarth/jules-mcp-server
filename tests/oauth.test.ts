@@ -8,6 +8,7 @@ import {
   createAuthCode,
   createRefreshToken,
   getBaseUrl,
+  getOAuthSigningSecret,
   verifyAccessToken,
   verifyAuthCode,
   verifyPkce,
@@ -62,6 +63,32 @@ describe("OAuth 2.0 / RFC 9728 implementation", () => {
     });
   });
 
+  describe("OAuth signing secret resolution", () => {
+    it("throws error if neither MCP_CLIENT_SECRET nor MCP_AUTH_TOKEN is set", () => {
+      delete process.env.MCP_CLIENT_SECRET;
+      delete process.env.MCP_AUTH_TOKEN;
+      expect(() => getOAuthSigningSecret()).toThrow("OAuth signing secret is not configured");
+    });
+
+    it("throws error if both secrets are shorter than 16 chars", () => {
+      process.env.MCP_CLIENT_SECRET = "short";
+      process.env.MCP_AUTH_TOKEN = "too-short";
+      expect(() => getOAuthSigningSecret()).toThrow("OAuth signing secret is not configured");
+    });
+
+    it("returns MCP_CLIENT_SECRET when it has at least 16 chars", () => {
+      process.env.MCP_CLIENT_SECRET = "secret-with-sixteen-chars";
+      delete process.env.MCP_AUTH_TOKEN;
+      expect(getOAuthSigningSecret()).toBe("secret-with-sixteen-chars");
+    });
+
+    it("falls back to MCP_AUTH_TOKEN when MCP_CLIENT_SECRET is unset or too short", () => {
+      process.env.MCP_CLIENT_SECRET = "short";
+      process.env.MCP_AUTH_TOKEN = "token-with-sixteen-chars";
+      expect(getOAuthSigningSecret()).toBe("token-with-sixteen-chars");
+    });
+  });
+
   describe("Metadata endpoints", () => {
     it("returns RFC 9728 protected resource metadata", async () => {
       const req = new Request("https://mcp.example.com/.well-known/oauth-protected-resource", {
@@ -109,6 +136,33 @@ describe("OAuth 2.0 / RFC 9728 implementation", () => {
   });
 
   describe("OAuth Authorize endpoint", () => {
+    it("fails closed with 500 when MCP_CLIENT_ID is unset", async () => {
+      delete process.env.MCP_CLIENT_ID;
+      const req = new Request(`https://mcp.example.com/api/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=https://gemini.google.com/oauth`);
+      const res = getAuthorize(req);
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("server_misconfigured");
+    });
+
+    it("fails closed with 500 when MCP_CLIENT_SECRET is unset", async () => {
+      delete process.env.MCP_CLIENT_SECRET;
+      const req = new Request(`https://mcp.example.com/api/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=https://gemini.google.com/oauth`);
+      const res = getAuthorize(req);
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("server_misconfigured");
+    });
+
+    it("fails closed with 500 when MCP_CLIENT_SECRET is shorter than 16 chars", async () => {
+      process.env.MCP_CLIENT_SECRET = "short-secret";
+      const req = new Request(`https://mcp.example.com/api/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=https://gemini.google.com/oauth`);
+      const res = getAuthorize(req);
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("server_misconfigured");
+    });
+
     it("rejects request missing client_id", async () => {
       const req = new Request("https://mcp.example.com/api/oauth/authorize?redirect_uri=https://gemini.google.com/oauth");
       const res = getAuthorize(req);
@@ -168,6 +222,45 @@ describe("OAuth 2.0 / RFC 9728 implementation", () => {
   });
 
   describe("OAuth Token endpoint", () => {
+    it("fails closed with 500 when MCP_CLIENT_ID is unset", async () => {
+      delete process.env.MCP_CLIENT_ID;
+      const req = new Request("https://mcp.example.com/api/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grant_type: "authorization_code" }),
+      });
+      const res = await postToken(req);
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("server_misconfigured");
+    });
+
+    it("fails closed with 500 when MCP_CLIENT_SECRET is unset", async () => {
+      delete process.env.MCP_CLIENT_SECRET;
+      const req = new Request("https://mcp.example.com/api/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grant_type: "authorization_code" }),
+      });
+      const res = await postToken(req);
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("server_misconfigured");
+    });
+
+    it("fails closed with 500 when MCP_CLIENT_SECRET is shorter than 16 chars", async () => {
+      process.env.MCP_CLIENT_SECRET = "short-secret";
+      const req = new Request("https://mcp.example.com/api/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grant_type: "authorization_code" }),
+      });
+      const res = await postToken(req);
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("server_misconfigured");
+    });
+
     it("rejects request with invalid client credentials", async () => {
       const req = new Request("https://mcp.example.com/api/oauth/token", {
         method: "POST",
